@@ -14,3 +14,8 @@ Eksploracja <br>
 Walka <br>
 ucieczka <br>
 Wybory zakończenia, koontynuowania itp <br>
+
+17 LIPIEC #2
+Dodanie przedmiotów <br>
+Rozbudowanie ucieczki <br>
+Edycja smoka <br>
