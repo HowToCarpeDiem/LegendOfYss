@@ -4,13 +4,13 @@
 start
 
 17 LIPIEC
-Gracz
--statystyki
--zadawane obażenia
--otrzymywane obrażenia
-Przeciwnik
--ork, goblin, smok
-Eksploracja
-Walka
-ucieczka
-Wybory zakończenia, koontynuowania itp
+Gracz <br>
+-statystyki <br>
+-zadawane obażenia <br>
+-otrzymywane obrażenia <br>
+Przeciwnik <br>
+-ork, goblin, smok <br>
+Eksploracja <br>
+Walka <br>
+ucieczka <br>
+Wybory zakończenia, koontynuowania itp <br>
