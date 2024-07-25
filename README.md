@@ -37,8 +37,6 @@ Kupiec (kupowanie i sprzedawanie przedmiotów) <br>
 
 Do zrobienia: <br>
 -'grafiki' <br>
--dodatkowe zdarzenia <br>
+-dodatkowe zdarzenia <br
 -umiejętności <br>
--baza wypadowa: <br>
-*kowal <br>
-*płatnerz`
+-płatnerz
