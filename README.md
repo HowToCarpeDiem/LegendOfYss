@@ -34,9 +34,11 @@ Zarządzanie ekwipunkiem <br>
 20 LIPIEC 
 Kupiec (kupowanie i sprzedawanie przedmiotów) <br>
 
+25 LIPIEC 
+Kolor tekstu <br>
+Podobizny <br>
+
 
 Do zrobienia: <br>
--'grafiki' <br>
 -dodatkowe zdarzenia <br
 -umiejętności <br>
--płatnerz
