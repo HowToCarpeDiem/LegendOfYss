@@ -12,22 +12,17 @@ class Item:
     def apply_effect(self, player):
         if self.effect_type == 'health':
             player.health += self.effect_value
-            print(f"Twoje zdrowie zwiększyło się o {self.effect_value} punktów!")
-        elif self.effect_type == 'attack':
+            print(f"\033[92mTwoje zdrowie zwiększyło się o {self.effect_value} punktów!\033[0m")
+        elif self.effect_type == 'attack': #bronie
             player.attack += self.effect_value
             print(f"Twoja siła ataku zwiększyła się o {self.effect_value} punktów!")
         elif self.effect_type == 'armor':
             player.armor += self.effect_value
-            print(f"Twój pancerz zwiększył się o {self.effect_value} punktów!")
+            print(f"\033[94mTwój pancerz zwiększył się o {self.effect_value} punktów!\033[0m")
+        elif self.effect_type == 'attack_boost':  #dla przedmiotów
+            player.attack += self.effect_value
+            print(f"\033[93mTwoja siła ataku zwiększyła się o {self.effect_value} punktów!\033[0m")
         print(f"Zastosowano efekt przedmiotu: {self.name}")
-
-def koloruj_tekst(tekst, kolor):
-    kolory = {
-        'czerwony': '\033[91m',
-        'zielony': '\033[92m',
-        'reset': '\033[0m'
-    }
-    return f"{kolory[kolor]}{tekst}{kolory['reset']}"
 
 class Player:
     def __init__(self, name):
@@ -38,16 +33,22 @@ class Player:
         self.gold = 0
         self.inventory = []
         self.active_weapon = None  
-        self.battle_count = 0
         self.experience = 0
+        self.battle_count = 0
+        self.unlocked_locations = ["Mroczny las"]
+        self.current_location = "Mroczny las"
+
+    def unlock_desert(self):
+        self.unlocked_desert = True
 
     def is_alive(self):
         return self.health > 0
     
-    def take_damage(self, damage):
+    def take_damage(self, damage, attacker):
         effective_damage = max(0, damage - self.armor)
         self.health -= effective_damage
-        print(f"Przyjąłeś {effective_damage} obrażeń")
+        print(f"\033[91m{attacker.name} zadał Ci {effective_damage} obrażeń\033[0m")
+
 
     def attack_enemy(self, enemy):
         if self.active_weapon:
@@ -57,10 +58,11 @@ class Player:
 
         if random.random() < 0.1:  
             damage = int(base_damage * 1.3)
-            print("Obrażenia krytyczne!")
+            print("\033[95mObrażenia krytyczne!\033[0m")
         else:
             damage = base_damage
         enemy.take_damage(damage)
+        print(f"\033[93mZadałeś {enemy.name} {damage} obrażeń\033[0m")
         return damage
 
     def show_status(self):
@@ -79,6 +81,7 @@ class Player:
         print(f"Pancerz: {self.armor}")
         print(f"Złoto: {self.gold}")
         print(f"Doświadczenie: {self.experience}")
+        print(f"Liczba walk: {self.battle_count}")  
         print(f"Ekwipunek: {', '.join([item.name for item in self.inventory]) if self.inventory else 'Puste'}\n")
 
     def choose_weapon(self):
@@ -98,7 +101,7 @@ class Player:
     
     def activate_item(self):
         print("Wybierz przedmiot do aktywacji:")
-        items = [item for item in self.inventory if item.effect_type in ['armor', 'health']]
+        items = [item for item in self.inventory if item.effect_type in ['armor', 'health','attack_boost']]
         if not items:
             print("Nie masz żadnych przedmiotów do aktywacji w ekwipunku.")
             return
@@ -112,7 +115,6 @@ class Player:
             print(f"Aktywowałeś przedmiot: {selected_item.name}")
         else:
             print("Niepoprawny wybór.")
-
 
 class Enemy:
     def __init__(self, name, health, attack, loot):
@@ -131,11 +133,12 @@ class Enemy:
         base_damage = random.randint(int(self.attack * 0.8), self.attack)
         if random.random() < 0.1:  
             damage = int(base_damage * 1.4)
-            print(f"{self.name} zadaje obrażenia krytyczne!")
+            print(f"\033[95m{self.name} zadaje obrażenia krytyczne!\033[0m")
         else:
             damage = base_damage
-        player.take_damage(damage)
+        player.take_damage(damage, self)
         return damage
+
 
 def visit_city(player):
     wiedzący = Wiedzący()
@@ -153,6 +156,7 @@ def visit_city(player):
             break
         else:
             print("Zły klawisz. Wciśnij 'u', 'k', 'h' lub 'w'")
+            
 
 class Kowal:
     def __init__(self):
@@ -207,7 +211,7 @@ class Merchant:
     def __init__(self):
         self.inventory = [
             Item("Eliksir zdrowia", "health", 30, 20),
-            Item("Eliksir mocy", "attack", 10, 25),
+            Item("Eliksir mocy", "attack_boost", 10, 25),
             Item("Pancerz ze skóry", "armor", 3, 15),
             Item("Miecz rycerza", "attack", 25, 50)
         ]
@@ -238,7 +242,7 @@ class Merchant:
             return
         print("\nTwój ekwipunek:")
         for i, item in enumerate(player.inventory):
-            print(f"{i+1}. {item.name} (Typ: {item.effect_type.capitalize()}, Wartość: {item.effect_value}, Cena sprzedaży: {item.gold_value // 2} złota)")
+            print(f"{i+1}. {item.name} (Typ: {item.effect_type.capitalize()}, Wartość: {item.effect_value}, Cena sprzedaży: {item.gold_value} złota)")
         choice = int(input("Wybierz numer przedmiotu, który chcesz sprzedać: ")) - 1
         if 0 <= choice < len(player.inventory):
             item = player.inventory.pop(choice)
@@ -254,13 +258,21 @@ class Bandit(Enemy):
     def __init__(self):
         super().__init__("Bandyta", 70, 20, [Item("Miecz bandyty", "attack", 20, 25)])
 
+class Ghost(Enemy):
+    def __init__(self):
+        super().__init__("Duch", 35, 10, [Item("Ektoplazma", "health", 20, 15)])
+
+class Skeleton(Enemy):
+    def __init__(self):
+        super().__init__("Szkielet", 45, 12, [Item("Kościany miecz", "attack", 20, 25)])
+
 
 class Wiedzący:
     def __init__(self):
         self.upgrades = {
-            'health': (100, 10, "Twoje zdrowie zwiększyło się o 10 punktów!"),
+            'health': (100, 10, "\033[92mTwoje zdrowie zwiększyło się o 10 punktów!\033[0m"),
             'attack': (140, 6, "Twoja siła ataku zwiększyła się o 6 punktów!"),
-            'armor': (200, 5, "Twój pancerz zwiększył się o 5 punktów!")
+            'armor': (200, 5, "\033[94mTwój pancerz zwiększył się o 5 punktów!\033[0m")
         }
 
     def upgrade(self, player):
@@ -291,23 +303,32 @@ class Wiedzący:
 
 
 def create_event(player):
-    enemies = [
-        Enemy("Goblin", 20, 6, [Item("Drewniana pałka", "attack", 12, 10), Item("Gulasz z Goblina", "health", 45, 5)]),
-        Enemy("Ork", 40, 10, [Item("Miecz Orka", "attack", 18, 20)])
-    ]
-    if player.battle_count >= 5:
-        enemies.append(Enemy("Smok", 100, 19, [Item("Odwar z języka smoka", "health", 80, 50)]))
-    if player.battle_count >= 4:
-        enemies.append(Enemy("Zjawa", 65, 18, [Item("Magiczny kaganek", "armor", 5, 15)]))
+    if player.current_location == "Mroczny las":
+        enemies = [
+            Enemy("Goblin", 20, 6, [Item("Drewniana pałka", "attack", 12, 10), Item("Gulasz z Goblina", "health", 45, 5)]),
+            Enemy("Ork", 40, 10, [Item("Miecz Orka", "attack", 18, 20)])
+        ]
+        if player.battle_count >= 4 and player.battle_count < 8:
+            enemies.append(Enemy("Zjawa", 65, 18, [Item("Magiczny kaganek", "armor", 5, 15)]))
+        
+        if player.battle_count == 8:
+            return Enemy("Smok", 100, 19, [Item("Odwar z języka smoka", "health", 80, 50)])
+    elif player.current_location == "Nawiedzony zamek":
+        enemies = [
+            Enemy("Upiór", 30, 8, [Item("Przeklęty sztylet", "attack", 24, 40)]),
+            Enemy("Cień", 50, 12, [Item("Mroczny płaszcz", "armor", 7, 25)]),
+            Ghost(),
+            Skeleton()
+        ]
 
     event_prob = random.random()
     
     if player.battle_count >= 4:
         if event_prob < 0.11:  
-            if player.gold >= 100:
-                choice = input("Wpadłeś w zasadzkę bandytów! Czy chcesz zapłacić 100 złota, aby uniknąć walki? (T)ak / (N)ie: ").lower()
+            if player.gold >= 30:
+                choice = input("Wpadłeś w zasadzkę bandytów! Czy chcesz zapłacić 30 złota, aby uniknąć walki? (T)ak / (N)ie: ").lower()
                 if choice == 't':
-                    player.gold -= 100
+                    player.gold -= 30
                     print("Zapłaciłeś 100 złota i zostałeś puszczony wolno.")
                     return None
                 else:
@@ -316,7 +337,7 @@ def create_event(player):
             else:
                 print("Nie masz wystarczająco złota! Musisz walczyć z bandytą!")
                 return Bandit()
-        elif event_prob < 0.22:  
+        elif event_prob < 0.18:  
             choice = input("Spotkałeś wróżbitę! Czy chcesz zapłacić 10 złota za wywróżenie przyszłości? (T)ak / (N)ie: ").lower()
             if choice == 't':
                 if player.gold >= 10:
@@ -337,6 +358,18 @@ def create_event(player):
             return None
 
     return random.choice(enemies)
+
+
+def change_location(player):
+    print("Dostępne lokacje:")
+    for i, location in enumerate(player.unlocked_locations):
+        print(f"{i+1}. {location}")
+    choice = int(input("Wybierz numer lokacji, do której chcesz się udać: ")) - 1
+    if 0 <= choice < len(player.unlocked_locations):
+        player.current_location = player.unlocked_locations[choice]
+        print(f"Udałeś się do: {player.current_location}")
+    else:
+        print("Niepoprawny wybór.")
 
 
 def explore(player):
@@ -417,7 +450,6 @@ def combat(player, enemy):
         action = input("(A)takuj lub (U)ciekaj ").lower()
         if action == 'a':
             damage = player.attack_enemy(enemy)
-            print(koloruj_tekst(f"Zadałeś {enemy.name} {damage} obrażeń", 'zielony'))
             if not enemy.is_alive():
                 print(f"Pokonałeś {enemy.name}")
                 player.gold += 10
@@ -428,7 +460,6 @@ def combat(player, enemy):
                 player.battle_count += 1
                 break
             damage = enemy.attack_player(player)
-            print(koloruj_tekst(f"{enemy.name} zadał Ci {damage} obrażeń", 'czerwony'))
             if not player.is_alive():
                 print("Nie żyjesz")
                 break
@@ -439,7 +470,7 @@ def combat(player, enemy):
             else:
                 print("Ucieczka nieudana! Musisz walczyć dalej!")
                 damage = enemy.attack_player(player)
-                print(koloruj_tekst(f"{enemy.name} zadał Ci {damage} obrażeń", 'czerwony'))
+                print(f"{enemy.name} zadał Ci {damage} obrażeń")
                 if not player.is_alive():
                     print("Nie żyjesz")
                     break
@@ -461,7 +492,7 @@ def main():
     print(f"Witaj, {player.name}! Twoja przygoda właśnie się zaczyna!")
 
     while player.is_alive():
-        action = input("(G)raj, (S)prawdź stan, (M)iasto, (W)ybierz broń, (A)ktywuj przedmioty, (Z)akończ przygodę ").lower()
+        action = input("(G)raj, (S)prawdź stan, (M)iasto, (W)ybierz broń, (A)ktywuj przedmioty, (Z)mień lokalizację, (K)oniec gry ").lower()
         if action == 'g':
             enemy = explore(player)
             if enemy:
@@ -469,6 +500,7 @@ def main():
                 if not player.is_alive():
                     break
                 if isinstance(enemy, Enemy) and enemy.name == "Smok":
+                    player.unlocked_locations.append("Nawiedzony zamek")
                     visit_city(player)
         elif action == 's':
             player.show_status()
@@ -479,12 +511,15 @@ def main():
         elif action == 'a':
             player.activate_item()
         elif action == 'z':
+            change_location(player)
+        elif action == 'k':
             print("Nie podołałeś?")
             break
         else:
-            print("Zły klawisz. Wciśnij 'g', 's', 'm', 'w', 'a' lub 'z' ")
+            print("Zły klawisz. Wciśnij 'g', 's', 'm', 'w', 'a', 'z' lub 'k' ")
     
     print("Koniec gry!")
+
 
 if __name__ == "__main__":
     main()

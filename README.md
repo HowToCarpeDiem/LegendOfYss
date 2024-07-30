@@ -38,7 +38,18 @@ Kupiec (kupowanie i sprzedawanie przedmiotów) <br>
 Kolor tekstu <br>
 Podobizny <br>
 
+29 LIPIEC
+Poprawa kolorów <br>
+Licznik walk <br>
+
+30 LIPIEC
+Nowa lokacja i przeciwnicy - Nawiedzony zamek <br>
+Edycja eliksiru mocy / nowy typ 'attack_boost' dla przedmiotów <br>
+
+
 
 Do zrobienia: <br>
--dodatkowe zdarzenia <br
--umiejętności <br>
+-dodatkowe zdarzenia <br>
+-umiejętności 
+-muzyka
+-edycja doświadczenia
