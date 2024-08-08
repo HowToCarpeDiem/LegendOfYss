@@ -13,6 +13,9 @@ class Item:
         if self.effect_type == 'health':
             player.health = min(player.health + self.effect_value, player.max_health)
             print(f"\033[92mTwoje zdrowie zwiększyło się o {self.effect_value} punktów!\033[0m")
+        elif self.effect_type == 'max_health':
+            player.max_health += self.effect_value
+            print(f"Twoje maksymalne zdrowie zwiększyło się o {self.effect_value}")
         elif self.effect_type == 'attack': #bronie
             player.attack += self.effect_value
             print(f"Twoja siła ataku zwiększyła się o {self.effect_value} punktów!")
@@ -34,7 +37,7 @@ class Player:
     def __init__(self, name):
         self.name = name
         self.health = 100
-        self.max_health = 100  # Maksymalny poziom zdrowia
+        self.max_health = 100  
         self.attack = 7
         self.armor = 0
         self.gold = 0
@@ -46,6 +49,8 @@ class Player:
         self.total_battle_count = 0
         self.unlocked_locations = ["Mroczna puszcza"]
         self.current_location = "Mroczna puszcza"
+        self.bestiary = Bestiary()  
+        self.encyclopedia = Encyclopedia()
 
     def revive(self):
         self.health = self.max_health
@@ -56,9 +61,6 @@ class Player:
         self.current_location = "Miasto"
         self.current_location = "Mroczna puszcza"
         print("\033[91mZostałeś przeniesiony do miasta. Straciłeś cały ekwipunek i złoto, ale zachowałeś aktywną broń.\033[0m")
-
-    def unlock_desert(self):
-        self.unlocked_desert = True
 
     def is_alive(self):
         return self.health > 0
@@ -75,7 +77,7 @@ class Player:
             base_damage = random.randint(int(self.attack * 0.8), self.attack)
 
         if random.random() < 0.1:  
-            damage = int((base_damage + self.attack) * 1.7)
+            damage = int((base_damage + self.attack) * 1.6)
             print("\033[95mObrażenia krytyczne!\033[0m")
         else:
             damage = base_damage
@@ -85,7 +87,7 @@ class Player:
 
     def show_status(self):
         print(f"\n{self.name} status:")
-        print(f"Zdrowie: {self.health}/{self.max_health}")  # Zaktualizowany status zdrowia
+        print(f"Zdrowie: {self.health}/{self.max_health}")  
         print(f"Podstawowy atak: {self.attack}")
         if self.active_weapon:
             weapon_name = self.active_weapon.name
@@ -101,6 +103,7 @@ class Player:
         print(f"Doświadczenie: {self.experience}")
         print(f"Liczba walk: {self.battle_count}")  
         print(f"Ekwipunek: {', '.join([item.name for item in self.inventory]) if self.inventory else 'Puste'}\n")
+        #print(f"Obecna lokacja: {self.current_location} ")
 
     def choose_weapon(self):
         print("Wybierz broń z ekwipunku:")
@@ -119,7 +122,7 @@ class Player:
     
     def activate_item(self):
         print("Wybierz przedmiot do aktywacji:")
-        items = [item for item in self.inventory if item.effect_type in ['armor', 'health','attack_boost', 'lithium']]
+        items = [item for item in self.inventory if item.effect_type in ['armor', 'health','attack_boost', 'lithium', 'max_health']]
         if not items:
             print("Nie masz żadnych przedmiotów do aktywacji w ekwipunku.")
             return
@@ -145,8 +148,6 @@ class Enemy:
 
     def is_alive(self):
         return self.health > 0
-        if self.health <= 0:
-           return  self.description
     
     def take_damage(self, damage):
         self.health -= damage
@@ -154,30 +155,52 @@ class Enemy:
     def attack_player(self, player):
         base_damage = random.randint(int(self.attack * 0.8), self.attack)
         if random.random() < 0.1:  
-            damage = int(base_damage * 1.7)
+            damage = int(base_damage * 1.6)
             print(f"\033[95m{self.name} zadaje obrażenia krytyczne!\033[0m")
         else:
             damage = base_damage
         player.take_damage(damage, self)
         return damage
 
+class Bestiary:
+    def __init__(self):
+        self.entries = {}
+
+    def add_entry(self, enemy_name, description):
+        if enemy_name not in self.entries:
+            self.entries[enemy_name] = description
+
+    def display_entries(self):
+        for enemy_name, description in self.entries.items():
+            print(f"\n{enemy_name}: {description}")
+
+class Encyclopedia:
+    def __init__(self):
+        self.entries = []
+
+    def add_entry(self, entry):
+        self.entries.append(entry)
+
+    def show_entries(self):
+        for entry in self.entries:
+            print(f"- {entry}")
 
 def visit_city(player):
     wiedzący = Wiedzący()
     kowal = Kowal()
     print("Witaj w mieście! Możesz tu ulepszyć swoją postać lub broń, albo handlować.")
     while True:
-        action = input("(U)lepsz postać, (K)owal, (H)andluj, (W)róć do gry: ").lower()
-        if action == 'u':
+        action = input("(W)iedzący, (K)owal, (H)andluj, (C)ofnij: ").lower()
+        if action == 'w':
             wiedzący.upgrade(player)
         elif action == 'k':
             kowal.upgrade_weapon(player)
         elif action == 'h':
             visit_merchant(player)
-        elif action == 'w':
+        elif action == 'c':
             break
         else:
-            print("Zły klawisz. Wciśnij 'u', 'k', 'h' lub 'w'")
+            print("Zły klawisz. Wciśnij 'w', 'k', 'h' lub 'c'")
             
 
 class Kowal:
@@ -210,7 +233,7 @@ class Kowal:
                 player.active_weapon.upgrade_level = 1
             else:
                 player.active_weapon.upgrade_level += 1
-            player.active_weapon.effect_value += 2 * next_level  # Przyrost ataku o 2 za każdy poziom
+            player.active_weapon.effect_value += 2 * next_level  
             print(f"Ulepszyłeś {player.active_weapon.name} do poziomu +{next_level}")
         else:
             print("Nie masz wystarczająco złota.")
@@ -275,7 +298,7 @@ class Merchant:
 
 class Bandit(Enemy):
     def __init__(self):
-        super().__init__("Bandyta", 70, 20, [Item("Miecz bandyty", "attack", 20, 25)], 60)
+        super().__init__("Bandyta", 70, 20, [Item("Miecz bandyty", "attack", 20, 25)], 60, "Bandyta")
 
 class Wiedzący:
     def __init__(self):
@@ -313,33 +336,48 @@ class Wiedzący:
 
 
 def create_event(player):
+    print(f"Tworzenie wydarzenia dla lokalizacji: {player.current_location}")  # Dodany
     enemies = []  
 
     if player.current_location == "Mroczna puszcza":
+        print("Lokalizacja: Mroczna puszcza")  # Dodany print
         enemies = [
-            Enemy("Goblin", 20, 6, [Item("Drewniana pałka", "attack", 12, 10), Item("Gulasz z Goblina", "health", 20, 5)], 20),
-            Enemy("Ork", 40, 10, [Item("Miecz Orka", "attack", 18, 20)], 35),
-            Enemy("La'therag", 45, 6, [Item("Lithium", "lithium", 10, )], 40)
+            Enemy("Goblin", 30, 7, [Item("Drewniana pałka", "attack", 12, 10), Item("Gulasz z Goblina", "health", 20, 5)], 20,"Prymitywnie rozwinięta rasa goblinów, zamieszkuje szczególnie zalesione tereny na północny wschód od Amro. \nZdrowie: 20 \nAtak: 6"),
+            Enemy("Rusałka", 25, 6, [Item("Proszek z skrzydeł Rusałki", "max_health", 2, 40)], 35, "Można je spotkać tylko w najgłębszych częściach kniei. Posiadają wrodzoną zdolność korzystania z magii.\nZdrowie: 40\nAtak: 10"),
+            Enemy("La'therag", 42, 9, [Item("Lithium", "lithium", 1, 0)], 40, "Przemieniony człowiek w plugawą istotę.\nZdrowie: 45\nAtak: 6")
         ]
         if player.battle_count >= 4 and player.battle_count < 8:
-            enemies.append(Enemy("Zjawa", 65, 18, [Item("Kaganek", "armor", 3, 15)], 50))
+            enemies.append(Enemy("Zjawa", 65, 18, [Item("Kaganek", "armor", 2, 15)], 50, "Wśród prostaczcków uważa się, że są to błądzące duchy ludzi, którzy popełnii straszliwy czyn\nZdrowie: 65\nAtak: 18"))
         
         if player.battle_count == 10:
-            return Enemy("Pani Puszczy", 120, 21, [Item("Eliksir z krwi Pani Puszczy", "health", 80, 80)], 250)
-    elif player.current_location == "Kręgi świata":
+            return Enemy("Pani Puszczy", 120, 21, [Item("Eliksir z krwi Pani Puszczy", "health", 80, 80)], 220, "Wiejska legenda o o potężnej wiedźmie strzerzącej swojego domu przed goścmi, okazała się prawdą\nZdrowie: 120\n Atak: 21")
+    elif player.current_location == "Kręgi Świata":
         enemies = [
-            Enemy("Upiór", 30, 8, [Item("Przeklęty sztylet", "attack", 24, 40)], 65),
-            Enemy("Cień", 50, 12, [Item("Mroczny płaszcz", "armor", 2, 25)], 90),
-            Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 120),
-            Enemy("Szkielet", 90, [Item("Miecz dwuręczny", 'attack', 40, 120)], 200),
-            Enemy("Harpia", 100, 10, [Item("Amulet z piór harpii", 'armor', 4, 50)])
+            Enemy("Śnieżny Troll", 150, 30, [Item("Skóra śnieżnego Trolla", "armor", 4, 120)], 180, "Wyróżniają się największą siłą wśród swojego gatunku\nZdrowie: 150\n Atak: 30"),
+            Enemy("Trokowie", 120, 20, [Item("Owoce ostokrzewu", "health", 50, 80)], 130, "Góskie plemię ludzi o własnej rozbudowanej kuturze wierzeń. W lecie schodzą z gór by rabować miasteczka i wsie. W zimie zaszywają się w górach, atakując każdego podróżnika\nZdrowie: 120\n Atak: 20"),
+            Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 170,"Przed przemianą był dumnym wojownikiem\nZdrowie: 140\n Atak: 35"),
+            Enemy("Szkielet", 130, 40, [Item("Miecz dwuręczny", 'attack', 40, 120)], 150, "W przeklętch miejscach, umarli wstają z grobu\nZdrowie: 130\n Atak: 40"),
+            Enemy("Harpia", 100, 22, [Item("Amulet z piór harpii", 'max_health', 8, 150)], 110, "Zamieszkuje wysokie partie gór, nie dostępne dla wrogów skąd wypatruje swojej ofiary\nZdrowie: 100\n Atak: 22")
         ]
-        if player.battle_count == 30:
-                return Enemy("Gryf", 400, 65, [Item("ODaw z języka Gryfa", "max_health", 60, 200)])
+        if player.battle_count == 35:
+                return Enemy("Gryf", 400, 65, [Item("Odwar z języka Gryfa", "max_attack", 20, 300)], 400, "Szlachetne stworzenie będące w herbie Amro. Zabicie go było czynem okrutnym, ale niestety nieuniknionym\nZdrowie: 400\n Atak: 65")
     elif player.current_location == "Azar":
         enemies = [
-            Enemy("La'therag Generał")
+            Enemy("La'therag Niszczyciel", 350, 60, [Item("Wielki miecz Niszczyciela", 'attack', 60, 200)], 350, "La'therag z ogromnym mieczem stworzony do zabijania"),
+            Enemy("Czempion La'theragow", 450, 50, [Item("Łuska z tarczy Czempiona", 'armor'), 5, 300], 350, "Wojownik zasłaniający się ogromną trójkątną tarczą")
         ]
+        if player.battle_count == 40:
+            print("Najwidoczniej nie tylko ty szukałeś klejnotu. Wchodząc do wielkiej sali w pałacu widzisz La'theraga większego od innych w drogich szatach i z dużym, charakterystycznym chełmem.\n")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("La'therag Generał: Długo drogę pokonałeśby tu dotrzeć. Tak, my też chcemy dostać klejnot.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            return Enemy("La'therag Generał", 500, 80, [Item("Zbroja generała","armor", 10,  500)], 800, "Potężny La'therag dowodzący innym przemienionym. Ciekawe...Czyżby La'theragi miały swoją hierarchię?\nZdrowie: 500\n Atak: 80")
 
     event_prob = random.random()
     
@@ -384,22 +422,17 @@ def create_event(player):
         return None
     
 def compendium(player):
-    action = input("(E)ncyklopedia, (G)losariusz, (B)estiariusz")
+    action = input("(E)ncyklopedia, (B)estiariusz")
     if action == 'e':
         print("\nKrólestwo Lazoreth zostało ogarnięte plagą. Ludzie zmieniają się w przerażające istoty zwane La'theragami. Gdy zostaje zaatakowana wioska, w której mieszkasz uciekasz z innymi ocalałymi na północ do Amro - stolicy królestwa i największego miasta Bezkresnych Wyżyn. By poradzić sobie w nowym otoczeniu postanawiasz kraść. Niefortunnie wpadasz przy pewnej mniejszej akcji. Trafiasz do lochu i przed Wielki Sąd. Masz do wyboru szafot, lub wstąpienie do Oczyszczonych. Po szybkiej rachubie decydujesz się na drugą opcję. Od tamtej chwili twoja przeszłość przestaje mieć znaczenie. \n")
-        print(f"\nNadałeś sobie imię {player.name}.\n")
-    elif action == 'g':
-        print(f"\nOpis broni\n")
+        print(f"Nadałeś sobie imię {player.name}.\n")
+        print("Oczyszczeni to pradawny zakon mający na celu chronić ludzkość przed plagą. Wokół zakonu obrosło wiele tajemnic. Nie udzielają się publicznie a ich główna kwatera Twierdza Ghest mieści się na odludziu na wschód od Amore. Wiele mieszkańców, mniejszych wiosekm którzy nie wychylają nosa poza swój dom, traktuje ich tylko jako legendę.\n")
+        print("Po przybyciu do twierdzy zostajesz poddany treningowi. Mimo, że nie trwa on długo, szybko przyswajasz nowe umiejętności. Twój Wiedzący (mentor) Ozahim wydobył z Ciebie w tym krótkim czasie, ogromny potencjał")
+        print("Zostajesz wysłany w podróż - twoim celem jest odnalezienie klejnotu Yss. Jego moc odpowiednio użyta ma powstrzymać plagę. Według zapisków, które od dawna studiują Skrybowie bractwa znajduje się w mieście Azar, które było 'perłą' dawnego królestwa Yss.\n")
+        player.encyclopedia.show_entries()
     elif action == 'b':
-        print("\nOpis potworów\n")
-        def __init__(self):
-            self.entries = {}
-        def add_entry(self, enemy_name, description):
-            if enemy_name not in self.entries:
-                self.entries[enemy_name] = description
-        def display_entries(self):
-            for enemy_name, description in self.entries.items():
-                print(f"{enemy_name}: {description}")
+        print("\nOpis przeciwników\n")
+        player.bestiary.display_entries()
 
 def change_location(player):
     print("Dostępne lokacje:")
@@ -414,7 +447,7 @@ def change_location(player):
 
 
 def explore(player):
-    print("Eksplorujesz Mroczna puszcza...")
+    print(f"Eksplorujesz {player.current_location}...")
     enemy_or_event = create_event(player)
     if isinstance(enemy_or_event, Enemy):
         print(f"Atakuje Cię {enemy_or_event.name}")
@@ -422,6 +455,28 @@ def explore(player):
     elif enemy_or_event is None:
         print("Nic się nie wydarzyło.")
         return None
+    
+def end_game(player):
+    print("Krwisto czerwony klejnot wielkości głowy, promieniuje ciepłem")
+    print("1. Zabierz klejnot")
+    print("2. Spróbuj pochłonąć jego moc")
+    choice = input()
+    if choice == '1':
+        if player.lithium == 0:
+            print("Koniec")
+        else:
+            print("Masz w sobie zbuy dużo z La'theraga")
+    elif choice == '2':
+        if player.lithium == 0:
+            if player.max_health >= 400:
+                print("Pochłonołeś moc kryształu")
+            else:
+                print("Okazałeś się zbyt słaby")
+        else:
+            print("Masz w sobie zbuy dużo z La'theraga")
+    exit()
+
+
 
 def combat(player, enemy):
     while player.is_alive() and enemy.is_alive():
@@ -432,14 +487,21 @@ def combat(player, enemy):
                 print(f"Pokonałeś {enemy.name}")
                 player.gold += 10
                 player.experience += enemy.experience
-                loot = random.choice(enemy.loot)
-                player.inventory.append(loot)
-                print(f"Zdobyłeś: {loot.name}")
+                if enemy.loot:
+                    loot = random.choice(enemy.loot)
+                    player.inventory.append(loot)
+                    print(f"Zdobyłeś: {loot.name}")
+                else:
+                    print("Nie zdobyłeś żadnych przedmiotów.")
+                if enemy.name == "Pani Puszczy":
+                    player.encyclopedia.add_entry("Pani puszczy pokonana. Pierwszy etap twojej podróży został zakończony. Po wyjściu z puszczy trafiasz pod spód Kręgów Świata. Najwyższego znanego Łańcucha Górskiego. Legenda głosi, że podczas pierwszej plagi ocalali przekroczyli je i założyli nowe miasta po tej stronie gór. Oznaczałoby to, że są naszymi przodkami. ")
+                elif enemy.name == "Gryf":
+                    player.encyclopedia.add_entry("Po pokonaniu Gryfa droga do Yss stoi przed tobą otworem. Po wyjściu z przełęczy, widzisz w oddali rozpościerające się pagórki pokryte wyschniętą trawą. Na horyzoncie majaczy twój cel. Miasto z charakterystyczntymi wysokimi, smukłymi wieżami - Amro, stolica prawie zapomnianego królestwa Yss.")
+                if enemy.name == "La'Therag Generał":
+                    end_game(player)
                 player.battle_count += 1
                 player.total_battle_count += 1
-                if enemy.health <= 0:
-                    description = enemy.is_alive()
-                    self.bestiary.add_entry(enemy.name, enemy.description)
+                player.bestiary.add_entry(enemy.name, enemy.description)
                 if player.total_battle_count == 100:
                     print("Nie zdążyłeś uratować królestwa")
                     exit()
@@ -490,7 +552,7 @@ def main():
             break
 
     while player.is_alive():
-        action = input("(G)raj, (S)prawdź stan, (M)iasto, (B)roń, (A)ktywuj przedmioty, (Z)mień lokalizację, (K)ompedium (W)yjście").lower()
+        action = input("(G)raj, (S)prawdź stan, (T)wierdza, (B)roń, (A)ktywuj przedmioty, (Z)mień lokalizację, (K)ompedium (W)yjście").lower()
         if action == 'g':
             enemy = explore(player)
             if enemy:
@@ -498,13 +560,13 @@ def main():
                 if not player.is_alive():
                     player.revive()
                     visit_city(player)
-                if isinstance(enemy, Enemy) and enemy.name == "Pani Puszczu":
+                if isinstance(enemy, Enemy) and enemy.name == "Pani Puszczy":
                     player.unlocked_locations.append("Kręgi Świata")
                 if isinstance(enemy, Enemy) and enemy.name == "Gryf":
                     player.unlocked_locations.append("Azar")                   
         elif action == 's':
             player.show_status()
-        elif action == 'm':
+        elif action == 't':
             visit_city(player)
         elif action == 'b':
             player.choose_weapon()

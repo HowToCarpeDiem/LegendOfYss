@@ -58,11 +58,24 @@ Poprawienie obrażeń <br>
 4 SIERPIEŃ
 Dodanie Lithium <br>
 Mechanika ograniczenia ilości walk i ogólne ich liczenie <br>
-próba dodania opisu 
+próba dodania opisu <br>
+
+6 SIERPIEŃ
+Bestiariusz i opisy <br>
+
+7 SIERPIEŃ 
+Opisy bestiariusza <br>
+Encyklopedia i opisy <br
+
+8 SIERPIEŃ
+Zakończenie <br>
+Rozbudowa walk w Amro <br>
+Rozbudowa Generała <br>
+Mechanika Lithium w końcówce <br>
+
 
 Do zrobienia: <br>
 -dodatkowe zdarzenia <br>
--umiejętności <br>
+-umiejętności(?) <br>
 -muzyka <br>
--lore <br>
--kompedium
+-Poprawa dialogów i dodanie/edycja wpisów
