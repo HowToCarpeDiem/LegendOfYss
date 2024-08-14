@@ -36,9 +36,9 @@ class Item:
 class Player:
     def __init__(self, name):
         self.name = name
-        self.health = 100
-        self.max_health = 100  
-        self.attack = 7
+        self.health = 400
+        self.max_health = 400  
+        self.attack = 300
         self.armor = 0
         self.gold = 0
         self.inventory = []
@@ -51,6 +51,7 @@ class Player:
         self.current_location = "Mroczna puszcza"
         self.bestiary = Bestiary()  
         self.encyclopedia = Encyclopedia()
+        self.merchant_encounters = 0 
 
     def revive(self):
         self.health = self.max_health
@@ -103,7 +104,6 @@ class Player:
         print(f"Doświadczenie: {self.experience}")
         print(f"Liczba walk: {self.battle_count}")  
         print(f"Ekwipunek: {', '.join([item.name for item in self.inventory]) if self.inventory else 'Puste'}\n")
-        #print(f"Obecna lokacja: {self.current_location} ")
 
     def choose_weapon(self):
         print("Wybierz broń z ekwipunku:")
@@ -300,6 +300,22 @@ class Bandit(Enemy):
     def __init__(self):
         super().__init__("Bandyta", 70, 20, [Item("Miecz bandyty", "attack", 20, 25)], 60, "Bandyta")
 
+def visit_mysterious_merchant(player):
+    player.merchant_encounters += 1 
+    if any(item.effect_type == "lithium" for item in player.inventory):  
+        choice = input("Spotykasz tajemniczego kupca. Kapelusz z długim rondlem sprawiał, że cień padał na jego twarz. Ubrany był w lekko poszarpane szaty, przypominające strój typowego cyrulika. \nRazoth: Witaj nieznajomy, jestem Razoth, wędrowny kupiec. Myślę, że moje niezwykłe towary mogą Cię zainteresować. Ale uwaga! Przyjmuję płatność tylko w Lithium, którego myślę, że ty masz sporo. Proponuję 30 złota za każdą porcję. (T)ak / (N)ie: ").lower()
+        if choice == 't':
+            lithium_items = [item for item in player.inventory if item.effect_type == "lithium"]
+            total_value = 30 * len(lithium_items) 
+            player.gold += total_value
+            player.inventory = [item for item in player.inventory if item.effect_type != "lithium"]  
+            print(f"Sprzedałeś wszystkie Lithium za {total_value} złota!")
+
+        else:
+            print("Razoth: Może innym razem - odpowiada z uśmiechem.")
+    else:
+        print("Nie masz żadnego Lithium w ekwipunku.")
+
 class Wiedzący:
     def __init__(self):
         self.upgrades = {
@@ -334,13 +350,10 @@ class Wiedzący:
             else:
                 print("Niepoprawny wybór. Spróbuj ponownie.")
 
-
 def create_event(player):
-    print(f"Tworzenie wydarzenia dla lokalizacji: {player.current_location}")  # Dodany
     enemies = []  
 
     if player.current_location == "Mroczna puszcza":
-        print("Lokalizacja: Mroczna puszcza")  # Dodany print
         enemies = [
             Enemy("Goblin", 30, 7, [Item("Drewniana pałka", "attack", 12, 10), Item("Gulasz z Goblina", "health", 20, 5)], 20,"Prymitywnie rozwinięta rasa goblinów, zamieszkuje szczególnie zalesione tereny na północny wschód od Amro. \nZdrowie: 20 \nAtak: 6"),
             Enemy("Rusałka", 25, 6, [Item("Proszek z skrzydeł Rusałki", "max_health", 2, 40)], 35, "Można je spotkać tylko w najgłębszych częściach kniei. Posiadają wrodzoną zdolność korzystania z magii.\nZdrowie: 40\nAtak: 10"),
@@ -349,40 +362,8 @@ def create_event(player):
         if player.battle_count >= 4 and player.battle_count < 8:
             enemies.append(Enemy("Zjawa", 65, 18, [Item("Kaganek", "armor", 2, 15)], 50, "Wśród prostaczcków uważa się, że są to błądzące duchy ludzi, którzy popełnii straszliwy czyn\nZdrowie: 65\nAtak: 18"))
         
-        if player.battle_count == 10:
-            return Enemy("Pani Puszczy", 120, 21, [Item("Eliksir z krwi Pani Puszczy", "health", 80, 80)], 220, "Wiejska legenda o o potężnej wiedźmie strzerzącej swojego domu przed goścmi, okazała się prawdą\nZdrowie: 120\n Atak: 21")
-    elif player.current_location == "Kręgi Świata":
-        enemies = [
-            Enemy("Śnieżny Troll", 150, 30, [Item("Skóra śnieżnego Trolla", "armor", 4, 120)], 180, "Wyróżniają się największą siłą wśród swojego gatunku\nZdrowie: 150\n Atak: 30"),
-            Enemy("Trokowie", 120, 20, [Item("Owoce ostokrzewu", "health", 50, 80)], 130, "Góskie plemię ludzi o własnej rozbudowanej kuturze wierzeń. W lecie schodzą z gór by rabować miasteczka i wsie. W zimie zaszywają się w górach, atakując każdego podróżnika\nZdrowie: 120\n Atak: 20"),
-            Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 170,"Przed przemianą był dumnym wojownikiem\nZdrowie: 140\n Atak: 35"),
-            Enemy("Szkielet", 130, 40, [Item("Miecz dwuręczny", 'attack', 40, 120)], 150, "W przeklętch miejscach, umarli wstają z grobu\nZdrowie: 130\n Atak: 40"),
-            Enemy("Harpia", 100, 22, [Item("Amulet z piór harpii", 'max_health', 8, 150)], 110, "Zamieszkuje wysokie partie gór, nie dostępne dla wrogów skąd wypatruje swojej ofiary\nZdrowie: 100\n Atak: 22")
-        ]
-        if player.battle_count == 35:
-                return Enemy("Gryf", 400, 65, [Item("Odwar z języka Gryfa", "max_attack", 20, 300)], 400, "Szlachetne stworzenie będące w herbie Amro. Zabicie go było czynem okrutnym, ale niestety nieuniknionym\nZdrowie: 400\n Atak: 65")
-    elif player.current_location == "Azar":
-        enemies = [
-            Enemy("La'therag Niszczyciel", 350, 60, [Item("Wielki miecz Niszczyciela", 'attack', 60, 200)], 350, "La'therag z ogromnym mieczem stworzony do zabijania"),
-            Enemy("Czempion La'theragow", 450, 50, [Item("Łuska z tarczy Czempiona", 'armor'), 5, 300], 350, "Wojownik zasłaniający się ogromną trójkątną tarczą")
-        ]
-        if player.battle_count == 40:
-            print("Najwidoczniej nie tylko ty szukałeś klejnotu. Wchodząc do wielkiej sali w pałacu widzisz La'theraga większego od innych w drogich szatach i z dużym, charakterystycznym chełmem.\n")
-            while True:
-                key = input("Naciśnij 'k', aby kontynuować: ").lower()
-                if key == 'k':
-                    break
-            print("La'therag Generał: Długo drogę pokonałeśby tu dotrzeć. Tak, my też chcemy dostać klejnot.")
-            while True:
-                key = input("Naciśnij 'k', aby kontynuować: ").lower()
-                if key == 'k':
-                    break
-            return Enemy("La'therag Generał", 500, 80, [Item("Zbroja generała","armor", 10,  500)], 800, "Potężny La'therag dowodzący innym przemienionym. Ciekawe...Czyżby La'theragi miały swoją hierarchię?\nZdrowie: 500\n Atak: 80")
-
-    event_prob = random.random()
-    
-    if player.battle_count >= 4:
-        if event_prob < 0.11:  
+        event_prob = random.random()
+        if event_prob < 0.06:  
             if player.gold >= 30:
                 choice = input("Wpadłeś w zasadzkę bandyty! Czy chcesz zapłacić 30 złota, aby uniknąć walki? (T)ak / (N)ie: ").lower()
                 if choice == 't':
@@ -395,7 +376,7 @@ def create_event(player):
             else:
                 print("Nie masz wystarczająco złota! Musisz walczyć z bandytą!")
                 return Bandit()
-        elif event_prob < 0.18:  
+        elif event_prob < 0.09:  
             choice = input("Spotkałeś wróżbitę! Czy chcesz zapłacić 10 złota za wywróżenie przyszłości? (T)ak / (N)ie: ").lower()
             if choice == 't':
                 if player.gold >= 10:
@@ -415,6 +396,70 @@ def create_event(player):
                 print("Nie skorzystałeś z usług wróżbity.")
             return None
 
+        if player.battle_count == 10:
+            return Enemy("Pani Puszczy", 120, 21, [Item("Eliksir z krwi Pani Puszczy", "health", 80, 80)], 220, "Wiejska legenda o o potężnej wiedźmie strzerzącej swojego domu przed goścmi, okazała się prawdą\nZdrowie: 120\n Atak: 21")
+    elif player.current_location == "Kręgi Świata":
+        enemies = [
+            Enemy("Śnieżny Troll", 150, 30, [Item("Skóra śnieżnego Trolla", "armor", 4, 120)], 180, "Wyróżniają się największą siłą wśród swojego gatunku\nZdrowie: 150\n Atak: 30"),
+            Enemy("Trokowie", 120, 20, [Item("Owoce ostokrzewu", "health", 50, 80)], 130, "Góskie plemię ludzi o własnej rozbudowanej kuturze wierzeń. W lecie schodzą z gór by rabować miasteczka i wsie. W zimie zaszywają się w górach, atakując każdego podróżnika\nZdrowie: 120\n Atak: 20"),
+            Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 170,"Przed przemianą był dumnym wojownikiem\nZdrowie: 140\n Atak: 35"),
+            Enemy("Szkielet", 130, 40, [Item("Miecz dwuręczny", 'attack', 40, 120)], 150, "W przeklętch miejscach, umarli wstają z grobu\nZdrowie: 130\n Atak: 40"),
+            Enemy("Harpia", 100, 22, [Item("Amulet z piór harpii", 'max_health', 8, 150)], 110, "Zamieszkuje wysokie partie gór, nie dostępne dla wrogów skąd wypatruje swojej ofiary\nZdrowie: 100\n Atak: 22")
+        ]
+        if player.battle_count == 35:
+                return Enemy("Gryf", 400, 65, [Item("Odwar z języka Gryfa", "max_attack", 20, 300)], 400, "Szlachetne stworzenie będące w herbie Amro. Zabicie go było czynem okrutnym, ale niestety nieuniknionym\nZdrowie: 400\n Atak: 65")
+        
+        event_prob = random.random()
+        if event_prob < 1:
+            # choice = input("Wędrując napotykasz jękającego wędrownego rycerza, który leży oparty o drzewo.\nRycerz: Nieznajomy! Ppp... Podejdź tutaj!\nJestem zarażony. Napadły mnie La'theragi, pokonałem je, lecz jeden z nich zdążył mnie ugryźć Czuję, że za niedługo dokona się przemiana. Zakończ moją mękę. Nie chcę stać się tym czymś.\n (D)obij rycerza lub (Z)ostaw go").lower()
+            # if choice == "d":
+            #     print("Skracasz męki rycerza i ruszasz w dalszą drogę")
+                
+            # if choice == "z":
+            #     print("Odwracasz się i ruszasz w dalszą drogę. Po chwili dobiegają Cię dziwne odgłosy. Odwracasz się i widzisz La'theraga biegnącego w twoją stronę")
+            #     return Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 170,"Przed przemianą był dumnym wojownikiem\nZdrowie: 140\n Atak: 35")
+        # elif event_prob < 14:
+            visit_mysterious_merchant(player)
+                
+        if player.merchant_encounters == 3 and player.battle_count == 38:
+            print("Na środku drogi spotykasz Tajemniczego kupca Razotha. Jego szaty są poszarpane bardziej niż były gdy go ostatnio widziałeś.  " )
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            return Enemy("Przemieniony Razoth", 600, 90, [Item("Kapelusz Razortha", 'max_attack', 20, 40), 700, "Eksperymentowanie z lithium nie popłaca" ])
+
+    elif player.current_location == "Azar":
+        enemies = [
+            Enemy("La'therag Niszczyciel", 350, 60, [Item("Wielki miecz Niszczyciela", 'attack', 60, 200)], 350, "La'therag z ogromnym mieczem stworzony do zabijania"),
+            Enemy("Czempion La'theragow", 450, 50, [Item("Łuska z tarczy Czempiona", 'armor', 5, 300)], 350, "Wojownik zasłaniający się ogromną trójkątną tarczą")
+        ]
+        if event_prob < 8:
+            choice = input("Eksplorując Azar znajdujesz bogato zdobioną skrzynię.\n(O)twierasz czy (z)ostawiasz?").lower()
+            if choice == 'o':
+                fortune.random_choice(["Mimik", "Nagroda"])
+                if fortune == "Mimik":
+                    print("Skrzynia przemienia się w Mimika, który z szyderczym śmiechem atakuje Cię.")
+                    return("Mimik", 460, 50, [Item("Perła z Thiedam", "max_health", 30)], 400, "Przemieniają się w różne przedmioty, zastawiając pułapkę na nieostrożnych wędrowców")
+                if fortune == "Nagroda":
+                    print("W skrzyni znajdujesz Perłę")
+                    return Item("Perła z Thiedam", "max_health", 30)
+
+        if player.battle_count == 40:
+            print("Docierasz do pałacu w Thiedam. Najwidoczniej nie tylko ty szukałeś klejnotu. Wchodząc do wielkiej sali w pałacu widzisz La'theraga większego od innych w drogich szatach i z dużym, charakterystycznym hełmem.\n")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("La'therag Generał: Długo drogę pokonałeśby tu dotrzeć. Tak, my też chcemy dostać klejnot.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            return Enemy("La'therag Generał", 500, 80, [Item("Zbroja generała","armor", 10,  500)], 800, "Potężny La'therag dowodzący innym przemienionym. Ciekawe...Czyżby La'theragi miały swoją hierarchię?\nZdrowie: 500\n Atak: 80")
+    elif player.current_location == "Ghest":
+        return Enemy("Przywódca La'theragów", 700, 100, [None], [None], [None])
+
     if enemies:  
         return random.choice(enemies)
     else:
@@ -426,9 +471,9 @@ def compendium(player):
     if action == 'e':
         print("\nKrólestwo Lazoreth zostało ogarnięte plagą. Ludzie zmieniają się w przerażające istoty zwane La'theragami. Gdy zostaje zaatakowana wioska, w której mieszkasz uciekasz z innymi ocalałymi na północ do Amro - stolicy królestwa i największego miasta Bezkresnych Wyżyn. By poradzić sobie w nowym otoczeniu postanawiasz kraść. Niefortunnie wpadasz przy pewnej mniejszej akcji. Trafiasz do lochu i przed Wielki Sąd. Masz do wyboru szafot, lub wstąpienie do Oczyszczonych. Po szybkiej rachubie decydujesz się na drugą opcję. Od tamtej chwili twoja przeszłość przestaje mieć znaczenie. \n")
         print(f"Nadałeś sobie imię {player.name}.\n")
-        print("Oczyszczeni to pradawny zakon mający na celu chronić ludzkość przed plagą. Wokół zakonu obrosło wiele tajemnic. Nie udzielają się publicznie a ich główna kwatera Twierdza Ghest mieści się na odludziu na wschód od Amore. Wiele mieszkańców, mniejszych wiosekm którzy nie wychylają nosa poza swój dom, traktuje ich tylko jako legendę.\n")
-        print("Po przybyciu do twierdzy zostajesz poddany treningowi. Mimo, że nie trwa on długo, szybko przyswajasz nowe umiejętności. Twój Wiedzący (mentor) Ozahim wydobył z Ciebie w tym krótkim czasie, ogromny potencjał")
-        print("Zostajesz wysłany w podróż - twoim celem jest odnalezienie klejnotu Yss. Jego moc odpowiednio użyta ma powstrzymać plagę. Według zapisków, które od dawna studiują Skrybowie bractwa znajduje się w mieście Azar, które było 'perłą' dawnego królestwa Yss.\n")
+        print("Oczyszczeni to pradawny zakon mający na celu chronić ludzkość przed plagą. Wokół zakonu obrosło wiele tajemnic. Nie udzielają się publicznie a ich główna kwatera Twierdza Ghest mieści się na odludziu na wschód od Amore. Rytuał dołączenia częściowo zmienia genetykę co sprawia, że Oczyszczeni mają ograniczone emocje - łatwiej jest im podejmować decyzje, które mają na uwadze dobro królestwa. Od początku wpajają rekrutom, że La'theragi już nie są ludźmi. Szkolenie ma za zadanie wyzbyć nowicjuszy z wyrzutów sumienia, jakie mogą mieć miejsce podczas walki z przemienionymi. Wiele mieszkańców, mniejszych wiosek którzy nie wychylają nosa poza swoją oborę, traktuje Oczyszczonych tylko jako legendę.\n")
+        print("Po przybyciu do twierdzy zostajesz poddany treningowi. Mimo, że nie trwa on długo, szybko przyswajasz nowe umiejętności. Twój Wiedzący (mentor) Ozahim wydobył z Ciebie w tym krótkim czasie, ogromny potencjał.")
+        print("Zostajesz wysłany w podróż - twoim celem jest odnalezienie klejnotu Yss. Jego moc odpowiednio użyta ma powstrzymać plagę. Według zapisków, które od dawna studiują Skrybowie bractwa znajduje się w mieście Thiedam, które było 'perłą' dawnego królestwa Yss.\n")
         player.encyclopedia.show_entries()
     elif action == 'b':
         print("\nOpis przeciwników\n")
@@ -457,27 +502,128 @@ def explore(player):
         return None
     
 def end_game(player):
-    print("Krwisto czerwony klejnot wielkości głowy, promieniuje ciepłem")
+    print("Krwisto czerwony klejnot wielkości głowy, promieniuje ciepłem. Czujesz, że przyzywa Cię, chce byś się z nim zjednoczył.")
     print("1. Zabierz klejnot")
     print("2. Spróbuj pochłonąć jego moc")
     choice = input()
     if choice == '1':
         if player.lithium == 0:
-            print("Koniec")
+            print("Zabrałeś klejnot i udałeś się w drogę powrotną do Ghest. Podróż minęła szybko i bezpiecznie. Prędko pobiegłeś spotkać się z Mistrzem Izyghorem. Gdy tylko dostał w ręce klejnot zwołał radę...")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Czekasz w holu gdy nagle wbiega goniec i pędzi w kierunku sali obrad. Wchodząc do sali krzyczy o Armii La'theragów zbliżających się do twierdzy.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+                print("To ostatnia szansa, żeby przygotować się do finałowej walki.")
+                break
         else:
-            print("Masz w sobie zbuy dużo z La'theraga")
+            print("Gdy przykładasz dłoń do kryształu, zaczyna on wciągać Cię wgłąb siebie. Próbujesz się przeciwstawić, ale jest zbyt silny. Wchłonąłeś zbyt dużo Lithium.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Otwierasz oczy. Widzisz pałac, w którym się jeszcze przed chwilą znajdowałeś, lecz nie jest on zniszczony zębem czasu. Wygląda jak za swoich najlepszych czasów. Dopiero teraz docierają do Ciebie odgłosy zabawy z wszystkich stron. Nie jesteś sam. Wokół trwa prawdziwy bal. Ludzie w pięknych, bogato zdobionych strojach tańczą, piją i ucztują. Nigdy nie widziałeś na oczy takich szat. Całkowicie się różnią od tych z twojego królestwa. Nagle zaczepia Cię ktoś. Jegomość z długą brunatną brodą i w zielonych szatach.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Bronto: Witaj! Jestem Bronto! - mówi podając Ci rękę. Widzę, że jesteś tutaj nowy. Zapewne tak jak my, chciałeś posmakować mocy klejnota! Ciekawe...dawno nikt nas nie odwiedzał. Dużo się zmienio w naszym Yss? Czekaj! Nie odpowiadaj. W sumie to nie obchodzi mnie to. Baw się z nami ile tylko zapragniesz! - woła odchodząc tanecznym krokiem.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Nie wiesz co powiedzieć. Czujesz, że pożera Cię pustka. Zawiodłeś wszystkich, któzy liczyli na Ciebie")
+            exit()
+
     elif choice == '2':
         if player.lithium == 0:
             if player.max_health >= 400:
-                print("Pochłonołeś moc kryształu")
+                print("Nie możesz się oprzeć. Masz wizję władzy i bogactwa przed oczami. Przykładasz dłoń do klejnotu. Czujesz jak topnieje pod wpływem twojego dotyku i wchłania się w twoje ciało. Czujesz się jakby krew w twoich żyłach się gotowała. Po chwili tracisz świadomość.")
+                player.max_health += 300
+                player.health += 300
+                player.attack += 300
+                while True:
+                    key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                    if key == 'k':
+                        break
+                print("Nie wiesz ile czasu minęło gdy się budzisz. Czujesz w sobie coś nowego, niodkrytego. Masz wrażenie, że słyszysz szmery wkoło siebie. Jakbyś nie był tu sam. Wstajesz i kierujesz się do wyjścia. Nie możesz wrócić do Twierdzy Ghest, więc ruszasz w kierunku Amro. Gdy przybywasz do miasta okazuje się, że jest prawie opustoszałe. PRAWIE. Jedynymi jej mieszkańcami są La'theragi pozostawione do pilnowania Pałacu. Czując w sobie niezwykłą moc, stajesz z nimi do walki. Trwa ona niezwykle krótko. Miażdzysz je swoimi ciosami. Na koniec zostawiasz sobie ich kapitana.")
+                while True:
+                    key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                    if key == 'k':
+                        break
+                return Enemy("Kapitan La'theragów", 500, 150, [None], None, None)
+            
             else:
-                print("Okazałeś się zbyt słaby")
+                print("Gdy przykładasz dłoń do kryształu, zaczyna on wciągać Cię wgłąb siebie. Próbujesz się przeciwstawić, ale jest zbyt silny. Wchłonąłeś zbyt dużo Lithium.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Otwierasz oczy. Widzisz pałac, w którym się jeszcze przed chwilą znajdowałeś, lecz nie jest on zniszczony zębem czasu. Wygląda jak za swoich najlepszych czasów. Dopiero teraz docierają do Ciebie odgłosy zabawy z wszystkich stron. Nie jesteś sam. Wokół trwa prawdziwy bal. Ludzie w pięknych, bogato zdobionych strojach tańczą, piją i ucztują. Nigdy nie widziałeś na oczy takich szat. Całkowicie się różnią od tych z twojego królestwa. Nagle zaczepia Cię ktoś. Jegomość z długą brunatną brodą i w zielonych szatach.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Bronto: Witaj! Jestem Bronto! - mówi podając Ci rękę. Widzę, że jesteś tutaj nowy. Zapewne tak jak my, chciałeś posmakować mocy klejnota! Ciekawe...dawno nikt nas nie odwiedzał. Dużo się zmienio w naszym Yss? Czekaj! Nie odpowiadaj. W sumie to nie obchodzi mnie to. Baw się z nami ile tylko zapragniesz! - woła odchodząc tanecznym krokiem.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Nie wiesz co powiedzieć. Czujesz, że pożera Cię pustka. Zawiodłeś wszystkich, któzy liczyli na Ciebie")
+            exit()
         else:
-            print("Masz w sobie zbuy dużo z La'theraga")
-    exit()
+            print("Gdy przykładasz dłoń do kryształu, zaczyna on wciągać Cię wgłąb siebie. Próbujesz się przeciwstawić, ale jest zbyt silny. Wchłonąłeś zbyt dużo Lithium.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Otwierasz oczy. Widzisz pałac, w którym się jeszcze przed chwilą znajdowałeś, lecz nie jest on zniszczony zębem czasu. Wygląda jak za swoich najlepszych czasów. Dopiero teraz docierają do Ciebie odgłosy zabawy z wszystkich stron. Nie jesteś sam. Wokół trwa prawdziwy bal. Ludzie w pięknych, bogato zdobionych strojach tańczą, piją i ucztują. Nigdy nie widziałeś na oczy takich szat. Całkowicie się różnią od tych z twojego królestwa. Nagle zaczepia Cię ktoś. Jegomość z długą brunatną brodą i w zielonych szatach.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Bronto: Witaj! Jestem Bronto! - mówi podając Ci rękę. Widzę, że jesteś tutaj nowy. Zapewne tak jak my, chciałeś posmakować mocy klejnota! Ciekawe...dawno nikt nas nie odwiedzał. Dużo się zmienio w naszym Yss? Czekaj! Nie odpowiadaj. W sumie to nie obchodzi mnie to. Baw się z nami ile tylko zapragniesz! - woła odchodząc tanecznym krokiem.")
+            while True:
+                key = input("Naciśnij 'k', aby kontynuować: ").lower()
+                if key == 'k':
+                    break
+            print("Nie wiesz co powiedzieć. Czujesz, że pożera Cię pustka. Zawiodłeś wszystkich, któzy liczyli na Ciebie")
+            exit()
 
+def ending1(player):
+    player.total_battle_count == 0
+    print("Przywódca pada od pchnięcia w klatkę piersiową, które przebiło jego zbroję. Łapie szybko każdy oddech jego ostatnich chwil życia. Z trudem ściąga hełm. W jego oczach powoli zanikają dwa płomienne niebieskie ogniki")
+    print("Przywódca La'theragów: Kiedyś byłem lordem daleko na zachodnich ziemiach. Pewnej nocy ugościłem pod moim dachem wędrowca. Nie wiedzieliśmy, że jest zarażony. Jeszcze tej samej nocy przemienił się i ugryzł mnie gdy spałem. Rano obudziłem się cały w krwi mojej rodziny. Żona, córka i syn. Wiesz... Nie poczułem się z tym źle. Wręcz przeciwnie. Nigdy nie czułem takiego przypływu mocy jak wtedy. Czułem, że... że mogę wszystko. Odszukałem innych zarażonych. W trakcie naszej wędrówki na Amro codziennie dołączali do nas nowi zarażeni. Nigdy się nie dowieszjak to jest płonąć prawdziwym ogniem rządzy krwi.")
+    while True:
+            key = input("Naciśnij 'k', aby kontynuować: ").lower()
+            if key == 'k':
+                break
+    print("Oczyszczeni dmą w trąby. Na najwyższej wieży stoi mistrz Izyghor trzymając klejnot Yss. 'W końcu' - myślisz. Wypowiada zaklęcie znalezione w książkach o starym królestwie. Klejnot zaczyna świecić blaskiem mocniejszym od słońca. Wkoło walka ustępuje. Nagle od Twierdzy przechodzi fala uderzeniowa wzbijająca obłoki kurzu na polu walki. Klejnot gaśnie i zamienia się w pył a razem z nim wszystkie La'theragi.")
+    while True:
+            key = input("Naciśnij 'k', aby kontynuować: ").lower()
+            if key == 'k':
+                break
+    print("20 lat później...")
+    print('"Klejnot Amro"- tak nazywa się twoje nowo otwarte muzeum. Można zobaczyć w nim na wystawie wszystkie artefakty znalezione przez Ciebie w królestwie Yss. Po pokonaniu plagi otrzymałeś tytuł Obieżyświata a twoim zadaniem zostało zbadanie starego królestwa i zebranie informacji o jego dawnych mieszkańcach i pladze. Muzeum nad którym ciężko pracowałeś jest twoim dziełem, na które poświęciłeś większość swojego życia.')
 
-
+def ending2(player):
+    print("Wchodzisz do sali obrad. Na ogromnym owalnym stole znajdujesz list. 'Zabarykadowaliśmy się w zamku. Armia La'theragów ciągle napiera. 2 dni temu rankiem zrobili wyłomy w murach i zdobyli miasto. Ich siła jest nie z tego świata. W działaniach musi wspierać ich sam bóg ciemności Higun, któy dał początek pladze.\nNie pozostało nam nic innego jak czekać na śmierć. Wszyscy mieszkańcy naszego królestwa szukali u nas schronienia. Twierdza Ghest padła. To koniec tej ery. Ery człowieka. \nPantosie, miej nas w swojej opiece.'")
+    while True:
+            key = input("Naciśnij 'k', aby kontynuować: ").lower()
+            if key == 'k':
+                break
+    print("3 miesiące później...")
+    while True:
+            key = input("Naciśnij 'k', aby kontynuować: ").lower()
+            if key == 'k':
+                break
+    print("Wędrujesz po świecie szukając odkupienia. Twoja pycha zgubiła krółestwo. Zabijając kolejne grupy La'theragów zmierzasz powoli ku drodze do szaleństwa. Głosy w twojej głowie ciągle narastają. Twoja misja dobiegnie końca gdy nikt żywy nie pozostanie na tej ziemi.")
+    
+    
 def combat(player, enemy):
     while player.is_alive() and enemy.is_alive():
         action = input("(A)takuj lub (U)ciekaj ").lower()
@@ -495,14 +641,20 @@ def combat(player, enemy):
                     print("Nie zdobyłeś żadnych przedmiotów.")
                 if enemy.name == "Pani Puszczy":
                     player.encyclopedia.add_entry("Pani puszczy pokonana. Pierwszy etap twojej podróży został zakończony. Po wyjściu z puszczy trafiasz pod spód Kręgów Świata. Najwyższego znanego Łańcucha Górskiego. Legenda głosi, że podczas pierwszej plagi ocalali przekroczyli je i założyli nowe miasta po tej stronie gór. Oznaczałoby to, że są naszymi przodkami. ")
+                elif enemy.name == "La'therag":
+                    player.encyclopedia.add_entry("Lithium to substancja wydzielana przez La'theragi. Mimo swoich właściwości wzmacniających nie zaleca się jej spożywania")
                 elif enemy.name == "Gryf":
-                    player.encyclopedia.add_entry("Po pokonaniu Gryfa droga do Yss stoi przed tobą otworem. Po wyjściu z przełęczy, widzisz w oddali rozpościerające się pagórki pokryte wyschniętą trawą. Na horyzoncie majaczy twój cel. Miasto z charakterystyczntymi wysokimi, smukłymi wieżami - Amro, stolica prawie zapomnianego królestwa Yss.")
-                if enemy.name == "La'Therag Generał":
+                    player.encyclopedia.add_entry("Po pokonaniu Gryfa droga do krainy Yss stoi przed tobą otworem. Po wyjściu z przełęczy, widzisz w oddali rozpościerające się pagórki pokryte wyschniętą trawą. Na horyzoncie majaczy twój cel. Miasto z charakterystyczntymi wysokimi, smukłymi wieżami - Thiedam, stolica prawie zapomnianego królestwa Yss.")
+                if enemy.name == "La'therag Generał":
                     end_game(player)
+                if enemy.name == "Przywódca La'theragów":
+                    ending1(player)
+                if enemy.name == "Kapitan La'theragów":
+                    ending2(player)
                 player.battle_count += 1
                 player.total_battle_count += 1
                 player.bestiary.add_entry(enemy.name, enemy.description)
-                if player.total_battle_count == 100:
+                if player.total_battle_count == 150:
                     print("Nie zdążyłeś uratować królestwa")
                     exit()
                 break
@@ -561,9 +713,14 @@ def main():
                     player.revive()
                     visit_city(player)
                 if isinstance(enemy, Enemy) and enemy.name == "Pani Puszczy":
+                    print('Odblokowano nową lokalizację: "Kręgi Świata"')
                     player.unlocked_locations.append("Kręgi Świata")
                 if isinstance(enemy, Enemy) and enemy.name == "Gryf":
-                    player.unlocked_locations.append("Azar")                   
+                    print('Odblokowano nową lokalizację: "Azar"')
+                    player.unlocked_locations.append("Azar")    
+                if isinstance(enemy, Enemy) and enemy.name == "La'therag Generał":
+                    print('Odblokowano nową lokalizację: "Ghest"')
+                    player.unlocked_locations.append("Ghest")                  
         elif action == 's':
             player.show_status()
         elif action == 't':

@@ -73,9 +73,18 @@ Rozbudowa walk w Amro <br>
 Rozbudowa Generała <br>
 Mechanika Lithium w końcówce <br>
 
+10 SIERPIEŃ
+Rozbudowanie ending1 <br>
 
-Do zrobienia: <br>
--dodatkowe zdarzenia <br>
--umiejętności(?) <br>
+11 SIERPIEŃ 
+Ending2 <br>
+
+13 SIERPIEŃ
+Dodatkowe Wydarzenia <br>
+
+13 SIERPIEŃ
+Dodatkowe Wydarzenia <br>
+Ending 3
+
+Do zrobienia: 
 -muzyka <br>
--Poprawa dialogów i dodanie/edycja wpisów
