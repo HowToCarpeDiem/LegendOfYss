@@ -88,3 +88,4 @@ Ending 3
 
 Do zrobienia: 
 -muzyka <br>
+-dodatkowa lokacja
