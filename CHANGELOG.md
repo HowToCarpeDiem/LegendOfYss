@@ -84,8 +84,10 @@ Dodatkowe Wydarzenia <br>
 
 13 SIERPIEŃ
 Dodatkowe Wydarzenia <br>
-Ending 3
+Ending 3  <br>
 
-Do zrobienia: 
--muzyka <br>
--dodatkowa lokacja
+11 WRZESIEŃ
+Poprawa działania sklepu <br>
+
+13 WRZESIEŃ
+Poprawa opisów <br>

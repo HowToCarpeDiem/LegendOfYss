@@ -37,7 +37,7 @@ class Item:
 class Player:
     def __init__(self, name):
         self.name = name
-        self.health = 1000
+        self.health = 100
         self.max_health = 100  
         self.attack = 1000
         self.armor = 0
@@ -116,7 +116,7 @@ class Player:
             return
         for i, weapon in enumerate(weapons):
             print(f"{i+1}. {weapon.name} (Atak: {weapon.effect_value}, Poziom: +{weapon.upgrade_level})")
-        choice = int(input("Podaj numer broni, którą chcesz aktywować: ")) - 1
+        choice = int(input("Podaj numer broni, którą chcesz aktywować (0 by cofnąć): ")) - 1
         if 0 <= choice < len(weapons):
             self.active_weapon = weapons[choice]
             print(f"Aktywowałeś broń: {self.active_weapon.name}")
@@ -131,7 +131,7 @@ class Player:
             return
         for i, item in enumerate(items):
             print(f"{i+1}. {item.name} (Typ: {item.effect_type.capitalize()}, Wartość: {item.effect_value})")
-        choice = int(input("Podaj numer przedmiotu, który chcesz aktywować: ")) - 1
+        choice = int(input("Podaj numer przedmiotu, który chcesz aktywować (0 by cofnąć): ")) - 1
         if 0 <= choice < len(items):
             selected_item = items[choice]
             selected_item.apply_effect(self)
@@ -275,7 +275,7 @@ class Merchant:
             self.inventory = [
                 Item("Eliksir zdrowia", "health", 80, 40),
                 Item("Amulet ochrony", "armor", 5, 120),
-                Item("Ostrze natury", "attack", 35, 180),
+                Item("Ostrze natury", "attack", 44, 180),
             ]
 
     def show_inventory(self):
@@ -320,7 +320,7 @@ class Bandit(Enemy):
 def visit_mysterious_merchant(player):
     player.merchant_encounters += 1 
     if any(item.effect_type == "lithium" for item in player.inventory):  
-        choice = input("Spotykasz tajemniczego kupca. Kapelusz z długim rondlem sprawiał, że cień padał na jego twarz. Ubrany był w lekko poszarpane szaty, przypominające strój typowego cyrulika. \nRazoth: Witaj nieznajomy, jestem Razoth, wędrowny kupiec. Myślę, że moje niezwykłe towary mogą Cię zainteresować. Ale uwaga! Przyjmuję płatność tylko w Lithium, którego myślę, że ty masz sporo. Proponuję 30 złota za każdą porcję. (T)ak / (N)ie: ").lower()
+        choice = input("Spotykasz tajemniczego kupca. Kapelusz z długim rondlem sprawiał, że cień padał na jego twarz. Ubrany był w lekko poszarpane szaty, przypominające strój typowego cyrulika. \nRazoth: Witaj nieznajomy, jestem Razoth, wędrowny kupiec. Tak się składa, że skupuję Lithium a ty wyglądadasz na kogoś kto sporo La'theragom jej napuścił. Proponuję 30 złota za każdą porcję. (T)ak / (N)ie: ").lower()
         if choice == 't':
             lithium_items = [item for item in player.inventory if item.effect_type == "lithium"]
             total_value = 30 * len(lithium_items) 
@@ -337,8 +337,8 @@ class Wiedzący:
     def __init__(self):
         self.upgrades = {
             'max_health': (80, 10, "\033[92mTwoje maksymalne zdrowie zwiększyło się o 10 punktów!\033[0m"),
-            'attack': (120, 5, "Twoja siła ataku zwiększyła się o 5 punktów!"),
-            'armor': (160, 4, "\033[94mTwój pancerz zwiększył się o 4 punktów!\033[0m")
+            'attack': (120, 4, "Twoja siła ataku zwiększyła się o 4 punktów!"),
+            'armor': (160, 2, "\033[94mTwój pancerz zwiększył się o 2 punktów!\033[0m")
         }
         self.upgrade_counts = {key: 0 for key in self.upgrades}
 
@@ -374,12 +374,12 @@ def create_event(player):
 
     if player.current_location == "Mroczna puszcza":
         enemies = [
-            Enemy("Goblin", 30, 7, [Item("Drewniana pałka", "attack", 8, 10), Item("Gulasz z Goblina", "health", 20, 5)], 20,"Prymitywnie rozwinięta rasa goblinów, zamieszkuje szczególnie zalesione tereny na północny wschód od Amro. \nZdrowie: 30 \nAtak: 7"),
+            Enemy("Goblin", 30, 8, [Item("Drewniana pałka", "attack", 8, 10), Item("Gulasz z Goblina", "health", 20, 5)], 20,"Prymitywnie rozwinięta rasa goblinów, zamieszkuje szczególnie zalesione tereny na północny wschód od Amro. \nZdrowie: 30 \nAtak: 8"),
             Enemy("Rusałka", 25, 6, [Item("Proszek z skrzydeł Rusałki", "max_health", 2, 40)], 35, "Można je spotkać tylko w najgłębszych częściach kniei. Posiadają wrodzoną zdolność korzystania z magii.\nZdrowie: 25\nAtak: 6"),
-            Enemy("La'therag", 42, 8, [Item("Lithium", "lithium", 1, 0)], 40, "Przemieniony człowiek w plugawą istotę.\nZdrowie: 42\nAtak: 8")
+            Enemy("La'therag", 38, 7, [Item("Lithium", "lithium", 1, 0)], 40, "Przemieniony człowiek w plugawą istotę.\nZdrowie: 38\nAtak: 7")
         ]
         if player.battle_count >= 4 and player.battle_count < 10:
-            enemies.append(Enemy("Zjawa", 65, 18, [Item("Kaganek", "armor", 2, 15)], 50, "Wśród prostaczcków uważa się, że są to błądzące duchy ludzi, którzy popełnii straszliwy czyn\nZdrowie: 65\nAtak: 18"))
+            enemies.append(Enemy("Zjawa", 65, 16, [Item("Kaganek", "armor", 2, 15)], 50, "Wśród prostaczcków uważa się, że są to błądzące duchy ludzi, którzy popełnii straszliwy czyn\nZdrowie: 65\nAtak: 16"))
         
     
         event_prob = random.random()
@@ -416,7 +416,7 @@ def create_event(player):
                 print("Nie skorzystałeś z usług wróżbity.")
             return None
 
-        if player.battle_count == 10:
+        if player.battle_count == 12:
             return Enemy("Pani Puszczy", 120, 21, [Item("Eliksir z krwi Pani Puszczy", "max_health", 20, 80)], 220, "Wiejska legenda o o potężnej wiedźmie strzerzącej swojego domu przed goścmi, okazała się prawdą\nZdrowie: 120\n Atak: 21")
     elif player.current_location == "Kręgi Świata":
         enemies = [
@@ -426,18 +426,18 @@ def create_event(player):
             Enemy("Szkielet", 130, 40, [Item("Miecz dwuręczny", 'attack', 40, 120)], 150, "W przeklętch miejscach, umarli wstają z grobu\nZdrowie: 130\n Atak: 40"),
             Enemy("Harpia", 100, 22, [Item("Amulet z piór harpii", 'max_health', 8, 150)], 110, "Zamieszkuje wysokie partie gór, nie dostępne dla wrogów skąd wypatruje swojej ofiary\nZdrowie: 100\n Atak: 22")
         ]
-        if player.battle_count == 35:
+        if player.battle_count == 36:
                 return Enemy("Gryf", 400, 65, [Item("Odwar z języka Gryfa", "max_attack", 20, 300)], 400, "Szlachetne stworzenie będące w herbie Amro. Zabicie go było czynem okrutnym, ale niestety nieuniknionym\nZdrowie: 400\n Atak: 65")
         
         event_prob = random.random()
         if event_prob < 0.04:
-            choice = input("Wędrując napotykasz jękającego wędrownego rycerza, który leży oparty o drzewo.\nRycerz: Nieznajomy! Ppp... Podejdź tutaj!\nJestem zarażony. Napadły mnie La'theragi, pokonałem je, lecz jeden z nich zdążył mnie ugryźć Czuję, że za niedługo dokona się przemiana. Zakończ moją mękę. Nie chcę stać się tym czymś.\n (D)obij rycerza lub (Z)ostaw go").lower()
+            choice = input("Wędrując napotykasz jękającego wędrownego rycerza, który leży oparty o drzewo.\nRycerz: Nieznajomy! Ppp... Podejdź tutaj!\nJestem zarażony. Napadły mnie La'theragi, pokonałem je, lecz jeden z nich zdążył mnie ugryźć. Czuję, że za niedługo dokona się przemiana. Zakończ moją mękę. Nie chcę stać się tym czymś.\n (D)obij rycerza lub (Z)ostaw go").lower()
             if choice == "d":
                  print("Skracasz męki rycerza i ruszasz w dalszą drogę")        
             if choice == "z":
                  print("Odwracasz się i ruszasz w dalszą drogę. Po chwili dobiegają Cię dziwne odgłosy. Odwracasz się i widzisz La'theraga biegnącego w twoją stronę")
                  return Enemy("Uzbrojony La'therag", 140, 35, [Item("Duża dawka Lithium", "lithium", 2, 0)], 170,"Przed przemianą był dumnym wojownikiem\nZdrowie: 140\n Atak: 35")
-        elif event_prob < 0.10:
+        elif event_prob < 0.12:
             visit_mysterious_merchant(player)
                 
         if player.merchant_encounters == 3 and player.battle_count == 38:
@@ -453,6 +453,7 @@ def create_event(player):
             Enemy("La'therag Niszczyciel", 350, 60, [Item("Wielki miecz Niszczyciela", 'attack', 60, 200)], 350, "La'therag z ogromnym mieczem stworzony do zabijania\nZdrowie: 350\nAtak: 60"),
             Enemy("Czempion La'theragow", 450, 50, [Item("Łuska z tarczy Czempiona", 'armor', 5, 300)], 350, "Wojownik zasłaniający się ogromną trójkątną tarczą\nZdrowie: 450\nAtak: 50")
         ]
+        event_prob = random.random()
         if event_prob < 0.07:
             choice = input("Eksplorując Azar znajdujesz bogato zdobioną skrzynię.\n(O)twierasz czy (z)ostawiasz?").lower()
             if choice == 'o':
@@ -464,7 +465,7 @@ def create_event(player):
                     print("W skrzyni znajdujesz Perłę")
                     return Item("Perła z Thiedam", "max_health", 30)
 
-        if player.battle_count == 40:
+        if player.battle_count == 42:
             print("Docierasz do pałacu w Thiedam. Najwidoczniej nie tylko ty szukałeś klejnotu. Wchodząc do wielkiej sali w pałacu widzisz La'theraga większego od innych w drogich szatach i z dużym, charakterystycznym hełmem.\n")
             while True:
                 key = input("Naciśnij 'k', aby kontynuować: ").lower()
@@ -477,7 +478,7 @@ def create_event(player):
                     break
             return Enemy("La'therag Generał", 500, 80, [Item("Zbroja generała","armor", 10,  500)], 800, "Potężny La'therag dowodzący innym przemienionym. Ciekawe...Czyżby La'theragi miały swoją hierarchię?\nZdrowie: 500\n Atak: 80")
     elif player.current_location == "Ghest":
-        return Enemy("Przywódca La'theragów", 700, 100, [None], [None], [None])
+        return Enemy("Przywódca La'theragów", 700, 110, [Item("Duża dawka Lithium", "lithium", 2, 0)], 0, "Przywódca")
 
     if enemies:  
         return random.choice(enemies)
@@ -629,7 +630,8 @@ def ending1(player):
             if key == 'k':
                 break
     print("20 lat później...")
-    print('"Klejnot Amro"- tak nazywa się twoje nowo otwarte muzeum. Można zobaczyć w nim na wystawie wszystkie artefakty znalezione przez Ciebie w królestwie Yss. Po pokonaniu plagi otrzymałeś tytuł Obieżyświata a twoim zadaniem zostało zbadanie starego królestwa i zebranie informacji o jego dawnych mieszkańcach i pladze. Muzeum nad którym ciężko pracowałeś jest twoim dziełem, na które poświęciłeś większość swojego życia.')
+    print('"Klejnot Yss"- tak nazywa się twoje nowo otwarte muzeum. Można zobaczyć w nim na wystawie wszystkie artefakty znalezione przez Ciebie w królestwie Yss. Po pokonaniu plagi otrzymałeś tytuł Obieżyświata a twoim zadaniem zostało zbadanie starego królestwa i zebranie informacji o jego dawnych mieszkańcach i pladze. Muzeum nad którym ciężko pracowałeś jest twoim dziełem, na które poświęciłeś większość swojego życia.')
+    exit()
 
 def ending2(player):
     print("Wchodzisz do sali obrad. Na ogromnym owalnym stole znajdujesz list. 'Zabarykadowaliśmy się w zamku. Armia La'theragów ciągle napiera. 2 dni temu rankiem zrobili wyłomy w murach i zdobyli miasto. Ich siła jest nie z tego świata. W działaniach musi wspierać ich sam bóg ciemności Higun, któy dał początek pladze.\nNie pozostało nam nic innego jak czekać na śmierć. Wszyscy mieszkańcy naszego królestwa szukali u nas schronienia. Twierdza Ghest padła. To koniec tej ery. Ery człowieka. \nPantosie, miej nas w swojej opiece.'")
