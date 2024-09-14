@@ -39,7 +39,7 @@ class Player:
         self.name = name
         self.health = 100
         self.max_health = 100  
-        self.attack = 1000
+        self.attack = 8
         self.armor = 0
         self.gold = 0
         self.inventory = []
