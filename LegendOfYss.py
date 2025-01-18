@@ -709,7 +709,7 @@ def combat(player, enemy, merchant):
 def open_new_terminal():
     if not os.environ.get('GAME_STARTED'):
         os.environ['GAME_STARTED'] = '1'
-        os.system('start cmd /k python D:/LegendOfYss/LegendOfYss.py')
+        os.system('start cmd /k python LegendOfYss.py')
 
 def main():
     if not os.environ.get('GAME_STARTED'):
